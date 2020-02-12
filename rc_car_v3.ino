@@ -1,12 +1,12 @@
 /*
-* Project: Arduino RC Car with PPM Receiver
-* Autor: Pedro Igo Sousa Lucas
-*/
+ * Project: Arduino RC Car with PPM Receiver
+ * Autor: Pedro Igo Sousa Lucas
+ */
 
 #include <Servo.h>
 #include <AFMotor.h>
 #include <PPMReader.h>  // By Nikkilae (https://github.com/Nikkilae/PPM-reader.git)
-#include <InterruptHandler.h>
+#include <InterruptHandler.h>  // By zeitgeist87 (https://github.com/zeitgeist87/InterruptHandler.git)
 
 #define ledPin 14 // Eye led's pin
 
