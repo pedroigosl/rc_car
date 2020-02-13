@@ -10,7 +10,7 @@
 
 #define ledPin 14 // Eye led's pin
 
-#define channelAmount 4 // Number of channels
+#define channelAmount 5 // Number of channels
 
 // Motors declaration. AFMotor library
 AF_DCMotor motorL(1);
@@ -25,11 +25,11 @@ double vl, vr; // Motor velocities
 double vlf = 190;
 double vrf = 200;
 
-int servoPin = 9;
+int servoPin = 19;
 Servo head;
 
 //Receiver pin (must be an interrupt capable pin)
-int interrruptPin = 2;
+int interruptPin = 2;
 PPMReader ppm(interruptPin, channelAmount);
 
 //Channels
@@ -41,8 +41,8 @@ double ts; // Turn style
 //Receiver input assignment
 void setup() 
 {
-  pinMode(14, OUTPUT);
-  head.attach(ServoPin);
+  pinMode(14, OUTPUT);  pinMode(10, OUTPUT);
+  head.attach(servoPin);
   Serial.begin(9600); 
 }
 
@@ -58,8 +58,8 @@ void loop()
   }
   lr = inputValue [0];
   fb = inputValue [1];
-  sv = inputValue [2];
-  ts = inputValue [3];
+  sv = inputValue [3];
+  ts = inputValue [4];
 
   if (lr > 1)
   {
@@ -174,6 +174,7 @@ void Movement ()
 void headMovement()
 {
   int aux;
-  aux = (180.0*sv)/1000.0;
-  head.write(top(aux, 0));     
+  aux = (180.0*(sv - 990))/1000.0;
+  aux = top(aux, 0);
+  head.write(aux);
 }
