@@ -1,21 +1,23 @@
 /*
  * Project: Arduino RC Car with PPM Receiver with iBUS battery tension feedback
- * Autor: Pedro Igo Sousa Lucas
+ * Author: Pedro Igo Sousa Lucas
  */
 
 #include <Servo.h>
-#include <AFMotor.h>
+#include <AFMotor.h>  // By Adafruit (Access Mar 10th 2020 https://github.com/adafruit/Adafruit-Motor-Shield-library)
 #include <PPMReader.h>  // By Nikkilae (Access Mar 10th 2020 https://github.com/Nikkilae/PPM-reader)
 #include <InterruptHandler.h>  // By zeitgeist87 (Access Mar 10th 2020 https://github.com/zeitgeist87/InterruptHandler)
 #include <iBUStelemetry.h>  // By Hrastovc (Access Mar 10th 2020 https://github.com/Hrastovc/iBUStelemetry)
 
 #define channelAmount 5 // Number of channels
 
+// GLOBAL VARIABLES --------------------------------------------------------------------------
+
 // Motors declaration. AFMotor library
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
 
-double inputValue [channelAmount];
+double inputChannel [channelAmount];
 
 double vl, vr; // Motor velocities
 // Motor Factors. Adjust to compensate for weaker motors. Max = 200, Min = 0
@@ -26,34 +28,44 @@ double vrf = 250;
 
 int ledPin = 14; // Eye led's pin
 int buzzer = 18;
-int tension = 19;
 int servoPin = 9; 
+
+// Variables for calculating tension
+int tensionSensor = A1; // Reading from voltage sensor
+double tension = 0; // Calulated tension
+double r1 = 30000; // Voltage sensor resistor 1
+double r2 = 7500; // Voltage sensor resistor 2
 
 Servo head;
 
-//Receiver pin (must be an interrupt capable pin)
+// Receiver pin (must be an interrupt capable pin)
 int interruptPin = 2;
 PPMReader ppm(interruptPin, channelAmount);
 
-//Channels
+// Telemetry pin declaration
+iBUStelemetry telemetry(16);
+
+// Channels
 double lr; // Left / Right
 double fb; // Forward / Back
-double bz; //buzzer
+// double bz; // Buzzer
 double sv; // Servo
 double ts; // Turn style
+
+// MAIN PROGRAM ------------------------------------------------------------------------------
 
 //Receiver input assignment
 void setup() 
 {
-  pinMode (tension, INPUT);
+  pinMode (tensionSensor, INPUT);
   pinMode(ledPin, OUTPUT); pinMode(buzzer, OUTPUT);
   
   head.attach(servoPin);
   
   Serial.begin(9600); 
   
-  telemetry.begin(115200);
-  telemetry.addSensor(0);
+  telemetry.begin(115200); // iBUS telemetry works on 115200 baud
+  telemetry.addSensor(0); // Adds type of sensor for iBUS. 0 is for internal voltage sensor (others not implemented in library)
 }
 
 void loop() 
@@ -62,22 +74,29 @@ void loop()
   // OBS: Pin A0 / 14 has weak solder and keeps losing contact
   for (int channel = 1; channel <= channelAmount; ++channel)
   {
-    inputValue[channel - 1] = ppm.latestValidChannelValue (channel, 0);
+    inputChannel[channel - 1] = ppm.latestValidChannelValue (channel, 0);
   }
-  lr = inputValue [0];
-  fb = inputValue [1];
-  bz = inputValue [2];
-  sv = inputValue [3];
-  ts = inputValue [4];
+  lr = inputChannel [0];
+  fb = inputChannel [1];
+//  bz = inputChannel [2];
+  sv = inputChannel [3];
+  ts = inputChannel [4];
 
-  voice();
+  // voice();
   if (lr > 1)
   {
     Movement();
     headMovement();
   }
 
-  telemetry.setSensorMeasurement(1, digitalRead(tension));
+  // Calculates nominal tension
+  tension = printTension(analogRead(tensionSensor), r1, r2);
+  telemetry.setSensorMeasurement(1, tension); // Sends tension to iBUS
+
+  /* 
+   * OBS: Original telemetry library would only return integer part of reading
+   * fixed by changing (int) to (float) in lines 621, 624 and 627 from iBUStelemetry.cpp
+   */
   
   // Console feedback
   Serial.print("Channel 1 (lr):");
@@ -89,10 +108,12 @@ void loop()
   Serial.print("Channel 5 (ts):");
   Serial.print(ts); Serial.print("\n");
   Serial.print("Tension:");
-  Serial.print(digitalRead(tension)); Serial.print("\n");
+  Serial.print(tension); Serial.print("\n");
   delay(100); // Here just to make the terminal 
   
 }
+
+// FUNCTIONS ------------------------------------------------------------------------------
 
 double top (double a, double b)
 {
@@ -193,6 +214,13 @@ void headMovement()
   head.write(aux);
 }
 
+// Calculates tension reading
+double printTension(int reading, double resistor_1, double resistor_2)
+{
+  return ((reading * 5)/((1024 * resistor_2)/(resistor_1 + resistor_2)));
+}
+
+/*
 void voice()
 {
   int aux;
@@ -202,3 +230,4 @@ void voice()
   //tone(buzzer, 500); 
   //noTone(buzzer);   
 }
+*/
