@@ -11,7 +11,9 @@
 
 #define channelAmount 5 // Number of channels
 
-// GLOBAL VARIABLES --------------------------------------------------------------------------
+/******************************************
+            GLOBAL VARIABLES
+******************************************/
 
 // Motors declaration. AFMotor library
 AF_DCMotor motorL(1);
@@ -52,7 +54,9 @@ double fb; // Forward / Back
 double sv; // Servo
 double ts; // Turn style
 
-// MAIN PROGRAM ------------------------------------------------------------------------------
+/******************************************
+               MAIN PROGRAM
+******************************************/
 
 //Receiver input assignment
 void setup() 
@@ -113,7 +117,9 @@ void loop()
   
 }
 
-// FUNCTIONS ------------------------------------------------------------------------------
+/******************************************
+                FUNCTIONS
+******************************************/
 
 double top (double a, double b)
 {
